@@ -1,0 +1,5 @@
+{
+  "name": "Archive AI Classifier & Retention Tool",
+  "description": "A tool to automatically classify archives and calculate retention schedules (JRA) using AI semantic matching.",
+  "requestFramePermissions": []
+}
