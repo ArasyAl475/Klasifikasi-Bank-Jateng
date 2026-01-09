@@ -15,9 +15,25 @@ export default function App() {
   const [processedData, setProcessedData] = useState<ProcessedResult[]>([]);
   const [parsedInput, setParsedInput] = useState<ParsedData | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [apiKeys, setApiKeys] = useState<string>('');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   const handleProcess = async () => {
     if (!inputFile || !refFile) return;
+
+    if (!apiKeys.trim()) {
+      setErrorMsg("Please add at least one Gemini API key");
+      return;
+    }
+
+    const keys = apiKeys.split('\n').map(k => k.trim()).filter(k => k.length > 0);
+    if (keys.length === 0) {
+      setErrorMsg("No valid API keys found");
+      return;
+    }
+
+    window.geminiApiKeys = keys;
+
     setIsProcessing(true);
     setProgress(0);
     setProcessedData([]);
@@ -126,6 +142,39 @@ export default function App() {
           </p>
         </div>
 
+        {/* API Keys Section */}
+        <div className="mb-8 p-6 bg-white border border-slate-200 rounded-xl">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">Gemini API Keys</h2>
+            <button
+              onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+              className="text-sm px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+            >
+              {showApiKeyInput ? 'Hide' : 'Add/Edit'}
+            </button>
+          </div>
+
+          {showApiKeyInput ? (
+            <div className="space-y-3">
+              <p className="text-sm text-slate-600">Enter your Gemini API keys (one per line). System will auto-failover when one is exhausted.</p>
+              <textarea
+                value={apiKeys}
+                onChange={(e) => setApiKeys(e.target.value)}
+                placeholder="AIzaSyA...&#10;AIzaSyB...&#10;AIzaSyC..."
+                className="w-full p-3 border border-slate-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                rows={4}
+              />
+              <p className="text-xs text-slate-500">Keys are stored in browser session only (not saved).</p>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-600">
+              {apiKeys.split('\n').filter(k => k.trim().length > 0).length > 0
+                ? `${apiKeys.split('\n').filter(k => k.trim().length > 0).length} API key(s) added`
+                : 'No API keys added yet'}
+            </p>
+          )}
+        </div>
+
         {/* Upload Section */}
         <div className="grid md:grid-cols-2 gap-8 mb-8">
           <FileUpload 
@@ -156,10 +205,10 @@ export default function App() {
         <div className="flex flex-col items-center justify-center">
           <button
             onClick={handleProcess}
-            disabled={!inputFile || !refFile || isProcessing}
+            disabled={!inputFile || !refFile || isProcessing || !apiKeys.trim()}
             className={`
               relative px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition-all
-              ${!inputFile || !refFile || isProcessing
+              ${!inputFile || !refFile || isProcessing || !apiKeys.trim()
                 ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
                 : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-200 hover:-translate-y-1'
               }
